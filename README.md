@@ -1,4 +1,4 @@
-# FuzzyCLIPS 🔥
+# FuzzyCLIPS
 
 > Fuzzy logic for [CLIPS](https://www.clipsrules.net/), **written in pure CLIPS**.
 
