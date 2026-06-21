@@ -1,0 +1,4 @@
+[submodule "third_party/fuzzyclips-native"]
+	path = third_party/fuzzyclips-native
+	url = https://github.com/rorchard/FuzzyCLIPS.git
+	ignore = dirty

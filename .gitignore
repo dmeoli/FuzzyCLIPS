@@ -1,0 +1,11 @@
+# Oracle build artifacts (the C engine is built locally, never committed)
+third_party/fuzzyclips-native/source/*.o
+third_party/fuzzyclips-native/source/fz_clips
+third_party/fuzzyclips-native/source/fz_xclips
+third_party/fuzzyclips-native/source/libclips.a
+
+# Editors / OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
