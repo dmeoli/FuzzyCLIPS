@@ -42,24 +42,47 @@ Build membership degrees for the canonical shapes:
 (fuzzy-centroid ?xs ?ys)
 ```
 
-## API (current)
+## API
+
+**Membership functions** — `*-y` forms return the membership degrees over a grid `?xs`:
+
+| Function | Shape |
+|---|---|
+| `fuzzy-triangle-y  ?xs ?a ?b ?c`    | triangular |
+| `fuzzy-trapezoid-y ?xs ?a ?b ?c ?d` | trapezoidal |
+| `fuzzy-gaussian-y  ?xs ?c ?sigma`   | gaussian (sampled) |
+| `fuzzy-s-y / fuzzy-z-y ?xs ?a ?b`   | Zadeh S- / Z-curve (sampled) |
+| `fuzzy-pi-y ?xs ?c ?w`              | Zadeh Π bell (sampled) |
+| `fuzzy-singleton-y ?xs ?c`          | singleton spike |
+
+**Set operators** (over universe `?from..?to`, return a *packed* `(x1 y1 x2 y2 …)` value, crossover points inserted):
+
+| Function | Op |
+|---|---|
+| `fuzzy-complement ?from ?to ?xs ?ys`           | `1 − μ` |
+| `fuzzy-union ?from ?to ?xsA ?ysA ?xsB ?ysB`    | `max` |
+| `fuzzy-intersection ?from ?to ?xsA ?ysA ?xsB ?ysB` | `min` |
+
+**Mamdani inference & defuzzification:**
 
 | Function | Purpose |
 |---|---|
-| `fuzzy-triangle-y  ?xs ?a ?b ?c`    | triangular membership degrees over `?xs` |
-| `fuzzy-trapezoid-y ?xs ?a ?b ?c ?d` | trapezoidal membership degrees over `?xs` |
-| `fuzzy-centroid ?xs ?ys`            | centroid / center-of-gravity defuzzification (≡ `moment-defuzzify`) |
-| `fuzzy-maximum  ?xs ?ys`            | mean-of-maxima defuzzification (≡ `maximum-defuzzify`) |
-| `fuzzy-centroid-of ?name`           | defuzzify a stored `fuzzy-set` fact by name |
+| `fuzzy-eval ?xs ?ys ?x`                | membership of a crisp `?x` (fuzzify) |
+| `fuzzy-clip ?from ?to ?xs ?ys ?alpha`  | implication: clip a consequent at firing strength `?alpha` |
+| `fuzzy-aggregate ?from ?to ?pa ?pb`    | aggregate two (clipped) consequents by union |
+| `fuzzy-centroid …` / `fuzzy-maximum …` | defuzzify — accept `(?xs ?ys)` **or** a packed value (≡ `moment-` / `maximum-defuzzify`) |
+| `fuzzy-centroid-of ?name`              | defuzzify a stored `fuzzy-set` fact by name |
+
+See [`examples/tipper.clp`](examples/tipper.clp) for a full fuzzify → rules → implication → aggregation → defuzzification pipeline.
 
 ## Roadmap
 
 - [x] Membership constructors (triangle, trapezoid)
 - [x] Defuzzification: centroid + maximum — validated vs the oracle
-- [ ] Fuzzy set operators: complement (`1−μ`), union (`max`), intersection (`min`) with crossover points
-- [ ] Mamdani inference (fuzzify → implication → aggregation → defuzzify)
-- [ ] More membership functions: gaussian, S / Z / Π, singleton
-- [ ] `examples/tipper.clp` (the classic tipping problem)
+- [x] Fuzzy set operators: complement (`1−μ`), union (`max`), intersection (`min`) with crossover points
+- [x] Mamdani inference (fuzzify → implication → aggregation → defuzzify)
+- [x] More membership functions: gaussian, S / Z / Π, singleton
+- [x] `examples/tipper.clp` (the classic tipping problem)
 
 ## Validation
 
@@ -69,17 +92,24 @@ FuzzyCLIPS 6.10d, included as a git submodule (oracle only — never shipped):
 ```bash
 git submodule update --init --recursive
 ./scripts/build-oracle.sh     # builds the 1998 C engine on a modern gcc
-./tests/diff_test.sh          # asserts ours == oracle within 1e-4
+./tests/diff_test.sh          # asserts ours == oracle
 ```
 
+The piecewise-linear core (defuzzification, set operators, Mamdani aggregation)
+matches the oracle to ~13 significant digits; curved MFs are *sampled*, so they
+converge to the oracle within a small tolerance.
+
 ```
-case                       ours         oracle    verdict
-----------------------------------------------------------
-tri_half              16.666667      16.666667       PASS
-tri_centered          50.000000      50.000000       PASS
-trapezoid             30.000000      30.000000       PASS
-tri_skew_left         23.333333      23.333333       PASS
-shoulder_right        57.058824      57.058824       PASS
+[1] defuzzification (centroid)      ours       oracle   verdict
+  tri_half / tri_centered / trapezoid / skew / shoulder        PASS
+[2] set operators
+  union 50.97826 / intersection 40.83333 / complement 58.88889 PASS
+[3] Mamdani aggregate+defuzzify
+  tipper(9,9)            21.53419     21.53419               PASS
+[4] curved membership functions (sampled, eps=0.2)
+  S / Z / PI                                                  PASS
+
+PASS=12 FAIL=0
 ```
 
 Set `CLIPS=/path/to/clips` if `clips` (6.4.x) is not on your `PATH`.
